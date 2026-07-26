@@ -17,4 +17,10 @@
 	  <ProjectReference Include="..\Unmute.Core\Unmute.Core.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="voices.txt">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 </Project>

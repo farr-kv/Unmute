@@ -1,5 +1,9 @@
-﻿using Unmute.Core.Services;
+﻿using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Globalization;
+using System.Text.RegularExpressions;
+using Unmute.Core.Models;
+using Unmute.Core.Services;
 
 namespace Unmute.TTS
 {
@@ -29,16 +33,32 @@ namespace Unmute.TTS
             }
         }
 
+        public IEnumerable<Voice> AvailableVoices { get; }
+
+        public Voice Voice { get; set; }
 
         public TtsService()
         {
-            
+            var regex = new Regex(@"\""(?<id>\w+)\"" \((?<lang>\w+)\)", RegexOptions.Compiled);
+            this.AvailableVoices = File.ReadAllLines("voices.txt")
+                                       .Select(x => regex.Match(x))
+                                       .Where(x => x.Success)
+                                       .Select(x => new Voice(x.Groups["id"].ToString(),
+                                                              this.ToTitleCase(x.Groups["id"].ToString()),
+                                                              x.Groups["lang"].ToString()))
+                                       .ToImmutableArray();
+
+            Voice = this.AvailableVoices.First();
         }
 
-        public async Task NarrateAsync(string text)
+        public async Task NarrateAsync(string text, Voice? voice = null)
         {
+            if (voice is null)
+                voice = this.Voice;
+
             using var request = new MultipartFormDataContent();
             request.Add(new StringContent(text), "text");
+            request.Add(new StringContent(voice.Id), "voice_url");
             var response = await this.httpClient.PostAsync("tts", request);
             if (!response.IsSuccessStatusCode)
                 return;
@@ -94,6 +114,12 @@ namespace Unmute.TTS
 
             ms.Position = 0;
             return ms;
+        }
+
+        private string ToTitleCase(string name)
+        {
+            return CultureInfo.CurrentCulture.TextInfo
+                .ToTitleCase(name.Replace("_", " ").ToLower());
         }
     }
 }

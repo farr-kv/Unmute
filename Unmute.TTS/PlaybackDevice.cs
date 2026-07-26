@@ -48,10 +48,7 @@ namespace Unmute.TTS
             });
 
             var tcs = new TaskCompletionSource<bool>();
-            player.PlaybackEnded += (_, _) =>
-            {
-                tcs.SetResult(true);
-            };
+            player.PlaybackEnded += (_, _) => tcs.SetResult(true);
             player.Play();
             return tcs.Task;
         }

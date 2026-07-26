@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using SoundFlow.Synthesis.Interfaces;
 using System.Diagnostics;
 using Unmute.Core.Extensions;
+using Unmute.Core.Models;
 using Unmute.Core.Services;
 using Unmute.OCR.Extensions;
 using Unmute.TTS.Extensions;
@@ -28,6 +30,12 @@ namespace Unmute.App.CLI
                     var proc = Process.GetProcessesByName("photos").FirstOrDefault()!;
                     var text = await appMonitor.MonitorProcessAsync(proc);
                     await tts.NarrateAsync(text);
+
+                    //foreach (var voice in tts.AvailableVoices)
+                    //{
+                    //    var text = "hello world, my name is " + voice.Name;
+                    //    await tts.NarrateAsync(text, voice);
+                    //}
                 }
                 finally
                 {
