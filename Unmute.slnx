@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Unmute.App.CLI/Unmute.App.CLI.csproj" Id="54cc19f8-941d-4c98-bc77-f366199721c8" />
+  <Project Path="Unmute.Core/Unmute.Core.csproj">
+    <BuildDependency Project="Unmute.ScreenCapture/Unmute.ScreenCapture.vcxproj" />
+  </Project>
+  <Project Path="Unmute.OCR/Unmute.OCR.csproj" />
+  <Project Path="Unmute.ScreenCapture/Unmute.ScreenCapture.vcxproj" Id="b20d597b-58d4-4ad1-ad80-d400d44b09fa" />
+  <Project Path="Unmute.TTS/Unmute.TTS.csproj" Id="e6cd5a88-87c6-45a8-aac0-71c5118bd80d" />
+</Solution>
