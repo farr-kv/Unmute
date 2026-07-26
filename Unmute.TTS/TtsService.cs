@@ -35,7 +35,7 @@ namespace Unmute.TTS
             
         }
 
-        public async Task Narrate(string text)
+        public async Task NarrateAsync(string text)
         {
             using var request = new MultipartFormDataContent();
             request.Add(new StringContent(text), "text");
@@ -43,9 +43,9 @@ namespace Unmute.TTS
             if (!response.IsSuccessStatusCode)
                 return;
             
-            var wavStream = await response.Content.ReadAsStreamAsync();
-            this.playback.Play(wavStream);
-            // TODO add await so the stream can be disposed here instead of in playback
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var wav = await this.FixWavStream(stream);
+            await this.playback.PlayAsync(wav);
         }
 
         public async Task StartAsync()
@@ -77,6 +77,23 @@ namespace Unmute.TTS
         {
             this.StopAsync().Wait();
             this.playback.Dispose();
+        }
+
+        // PocketTTS does not set the length as it streams the audio. This needs to be corrected before initiating playback
+        private async Task<Stream> FixWavStream(Stream stream)
+        {
+            var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var buffer = ms.GetBuffer();
+            var totalLength = (int)ms.Length;
+
+            var riffSize = totalLength - 8;
+            BitConverter.GetBytes(riffSize).CopyTo(buffer, 4);
+            var dataSize = totalLength - 44;
+            BitConverter.GetBytes(dataSize).CopyTo(buffer, 40);
+
+            ms.Position = 0;
+            return ms;
         }
     }
 }

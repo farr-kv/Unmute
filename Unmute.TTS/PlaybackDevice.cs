@@ -31,9 +31,9 @@ namespace Unmute.TTS
             this.Engine.Dispose();
         }
 
-        public void Play(Stream stream)
+        public Task PlayAsync(Stream stream)
         {
-            this.playbackTask?.Dispose();
+            this.Stop();
 
             var dataProvider = new StreamDataProvider(this.Engine, this.Format, stream);
             var player = new SoundPlayer(this.Engine, this.Format, dataProvider);
@@ -44,10 +44,16 @@ namespace Unmute.TTS
                 this.AudioPlaybackDevice.MasterMixer.RemoveComponent(player);
                 player.Dispose();
                 dataProvider.Dispose();
-                stream.Dispose();
                 this.playbackTask = null;
             });
-            player.Play();            
+
+            var tcs = new TaskCompletionSource<bool>();
+            player.PlaybackEnded += (_, _) =>
+            {
+                tcs.SetResult(true);
+            };
+            player.Play();
+            return tcs.Task;
         }
 
         public void Stop()

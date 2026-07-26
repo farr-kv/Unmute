@@ -27,7 +27,7 @@ namespace Unmute.App.CLI
                     await tts.StartAsync();
                     var proc = Process.GetProcessesByName("photos").FirstOrDefault()!;
                     var text = await appMonitor.MonitorProcessAsync(proc);
-                    await tts.Narrate(text);
+                    await tts.NarrateAsync(text);
                 }
                 finally
                 {

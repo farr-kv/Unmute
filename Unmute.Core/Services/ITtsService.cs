@@ -5,7 +5,7 @@
         bool IsRunning { get; }
 
         void Dispose();
-        Task Narrate(string text);
+        Task NarrateAsync(string text);
         Task StartAsync();
         Task StopAsync();
     }
