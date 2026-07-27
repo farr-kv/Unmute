@@ -1,10 +1,10 @@
 ﻿namespace Unmute.Core
 {
-    public class ActionDisposable : IDisposable
+    public class DisposableAction : IDisposable
     {
         private readonly Action action;
 
-        public ActionDisposable(Action action)
+        public DisposableAction(Action action)
         {
             this.action = action;
         }

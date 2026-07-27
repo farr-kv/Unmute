@@ -1,11 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using SoundFlow.Synthesis.Interfaces;
 using System.Diagnostics;
 using Unmute.Core.Extensions;
 using Unmute.Core.Models;
 using Unmute.Core.Services;
-using Unmute.OCR.Extensions;
-using Unmute.TTS.Extensions;
+using Unmute.OCR.PaddleOCR.Extensions;
+using Unmute.TTS.PocketTTS.Extensions;
 
 namespace Unmute.App.CLI
 {
@@ -14,18 +13,22 @@ namespace Unmute.App.CLI
         static void Main(string[] args)
         {
             var serviceProvider = new ServiceCollection()
-                .AddUnmute()
-                .UseOCR()
-                .UseTTS()
+                .AddUnmuteCore()
+                .UsePaddleOCR()
+                .UsePocketTTS()
                 .BuildServiceProvider();
 
             var tts = serviceProvider.GetRequiredService<ITtsService>();
+            var ocrEngine = serviceProvider.GetRequiredService<IOCREngine>();
             var appMonitor = serviceProvider.GetRequiredService<IApplicationMonitor>();
 
             Task.Run(async () =>
             {
                 try
                 {
+                    await tts.InitializeAsync();
+                    await ocrEngine.InitializeAsync();
+
                     await tts.StartAsync();
                     var proc = Process.GetProcessesByName("photos").FirstOrDefault()!;
                     var text = await appMonitor.MonitorProcessAsync(proc);

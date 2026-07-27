@@ -13,8 +13,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Unmute.Core\Unmute.Core.csproj" />
-    <ProjectReference Include="..\Unmute.OCR\Unmute.OCR.csproj" />
-    <ProjectReference Include="..\Unmute.TTS\Unmute.TTS.csproj" />
+    <ProjectReference Include="..\Unmute.OCR.PaddleOCR\Unmute.OCR.PaddleOCR.csproj" />
+    <ProjectReference Include="..\Unmute.TTS.PocketTTS\Unmute.TTS.PocketTTS.csproj" />
   </ItemGroup>
 
 </Project>

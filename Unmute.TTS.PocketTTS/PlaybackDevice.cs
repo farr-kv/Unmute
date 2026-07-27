@@ -5,7 +5,7 @@ using SoundFlow.Providers;
 using SoundFlow.Structs;
 using Unmute.Core;
 
-namespace Unmute.TTS
+namespace Unmute.TTS.PocketTTS
 {
     internal class PlaybackDevice: IDisposable
     {
@@ -39,7 +39,7 @@ namespace Unmute.TTS
             var player = new SoundPlayer(this.Engine, this.Format, dataProvider);
             this.AudioPlaybackDevice.MasterMixer.AddComponent(player);
 
-            this.playbackTask = new ActionDisposable(() =>
+            this.playbackTask = new DisposableAction(() =>
             {
                 this.AudioPlaybackDevice.MasterMixer.RemoveComponent(player);
                 player.Dispose();

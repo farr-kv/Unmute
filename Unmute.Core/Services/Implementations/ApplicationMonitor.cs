@@ -40,7 +40,7 @@ namespace Unmute.Core.Services.Implementations
                 }
             });
 
-            return new ActionDisposable(() =>
+            return new DisposableAction(() =>
             {
                 cts.Cancel();
                 task.Wait();

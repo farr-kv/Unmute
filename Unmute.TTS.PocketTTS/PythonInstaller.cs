@@ -2,7 +2,7 @@
 using System.IO.Compression;
 using System.Text.RegularExpressions;
 
-namespace Unmute.TTS
+namespace Unmute.TTS.PocketTTS
 {
     internal class PythonInstaller
     {
@@ -54,25 +54,25 @@ namespace Unmute.TTS
             {
                 Directory.CreateDirectory(WorkingDirectory);
                 var downloadPythonPath = $"https://www.python.org/ftp/python/{version}/python-{version}-embed-amd64.zip";
-                var pythonZip = await Download(downloadPythonPath);
+                var pythonZip = await DownloadAsync(downloadPythonPath);
                 await ZipFile.ExtractToDirectoryAsync(pythonZip, WorkingDirectory);
                 File.Delete(pythonZip);
             }
 
-            await EnableImports();
+            await EnableImportsAsync();
 
             var client = new PythonClient(WorkingDirectory, PythonExe);
 
             if (addPip)
-                await InstallPip(client);
+                await InstallPipAsync(client);
 
             if (addUv)
-                await InstallUV(client);
+                await InstallUVAsync(client);
 
             return client;
         }
 
-        private async Task EnableImports()
+        private async Task EnableImportsAsync()
         {
             var configFile = GetFile(@"python(\w*)\._pth");
             if (configFile is null)
@@ -92,24 +92,24 @@ namespace Unmute.TTS
             await File.WriteAllTextAsync(configFile, contents);
         }
 
-        private async Task InstallPip(PythonClient client)
+        private async Task InstallPipAsync(PythonClient client)
         {
             var isPipInstalled = File.Exists(Path.Combine(WorkingDirectory, "Scripts", "pip.exe"));
             if (isPipInstalled)
                 return;
 
             var downloadPipPath = @"https://bootstrap.pypa.io/get-pip.py";
-            await Download(downloadPipPath);
+            await DownloadAsync(downloadPipPath);
             await client.ExecutePythonAsync("get-pip.py", Console.Out);
         }
 
-        private async Task InstallUV(PythonClient client)
+        private async Task InstallUVAsync(PythonClient client)
         {
             await client.ExecutePythonAsync("-m pip install uv", Console.Out); // TODO Get a logger from DI
         }
         #endregion
 
-        private async Task<string> Download(string url)
+        private async Task<string> DownloadAsync(string url)
         {
             var uri = new Uri(url);
             var outputPath = Path.Combine(WorkingDirectory, Path.GetFileName(uri.AbsolutePath));

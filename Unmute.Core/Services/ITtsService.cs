@@ -10,6 +10,7 @@ namespace Unmute.Core.Services
 
         void Dispose();
         Task NarrateAsync(string text, Voice? voice = null);
+        Task InitializeAsync();
         Task StartAsync();
         Task StopAsync();
     }

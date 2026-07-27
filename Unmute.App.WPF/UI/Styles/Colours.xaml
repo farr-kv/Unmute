@@ -1,0 +1,17 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <SolidColorBrush x:Key="ColourText" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ColourTextDimmed" Color="#B0B0B0" />
+	<SolidColorBrush x:Key="ColourPositive" Color="#339933" />
+	<SolidColorBrush x:Key="ColourWarning" Color="#E68A00" />
+	<SolidColorBrush x:Key="ColourNegative" Color="#CC0000" />
+    <SolidColorBrush x:Key="ColourBackground" Color="#22222a" />
+    <SolidColorBrush x:Key="ColourBackgroundDimmed" Color="#A0000000" />
+
+    <SolidColorBrush x:Key="ColourFocus1" Color="#40FFFFFF" />
+    <SolidColorBrush x:Key="ColourFocus2" Color="#80FFFFFF" />
+    <SolidColorBrush x:Key="ColourFocus3" Color="#A0FFFFFF" />
+
+</ResourceDictionary>

@@ -6,7 +6,7 @@ namespace Unmute.Core.Extensions
 {
     public static class DIExtensions
     {
-        public static IServiceCollection AddUnmute(this IServiceCollection instance)
+        public static IServiceCollection AddUnmuteCore(this IServiceCollection instance)
         {
             instance.AddSingleton<IApplicationMonitor, ApplicationMonitor>();
 

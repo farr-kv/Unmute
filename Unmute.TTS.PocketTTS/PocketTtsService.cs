@@ -5,13 +5,14 @@ using System.Text.RegularExpressions;
 using Unmute.Core.Models;
 using Unmute.Core.Services;
 
-namespace Unmute.TTS
+namespace Unmute.TTS.PocketTTS
 {
-    internal class TtsService : ITtsService, IDisposable
+    internal class PocketTtsService : ITtsService, IDisposable
     {
         private readonly HttpClient httpClient = new();
         private readonly PlaybackDevice playback = new();
 
+        private PythonClient python;
         private Process? process;
 
         public bool IsRunning
@@ -33,22 +34,13 @@ namespace Unmute.TTS
             }
         }
 
-        public IEnumerable<Voice> AvailableVoices { get; }
+        public IEnumerable<Voice> AvailableVoices { get; private set; }
 
         public Voice Voice { get; set; }
 
-        public TtsService()
+        public PocketTtsService()
         {
-            var regex = new Regex(@"\""(?<id>\w+)\"" \((?<lang>\w+)\)", RegexOptions.Compiled);
-            this.AvailableVoices = File.ReadAllLines("voices.txt")
-                                       .Select(x => regex.Match(x))
-                                       .Where(x => x.Success)
-                                       .Select(x => new Voice(x.Groups["id"].ToString(),
-                                                              this.ToTitleCase(x.Groups["id"].ToString()),
-                                                              x.Groups["lang"].ToString()))
-                                       .ToImmutableArray();
-
-            Voice = this.AvailableVoices.First();
+           
         }
 
         public async Task NarrateAsync(string text, Voice? voice = null)
@@ -68,28 +60,42 @@ namespace Unmute.TTS
             await this.playback.PlayAsync(wav);
         }
 
+        public async Task InitializeAsync()
+        {
+            var regex = new Regex(@"\""(?<id>\w+)\"" \((?<lang>\w+)\)", RegexOptions.Compiled);
+            this.AvailableVoices = File.ReadAllLines("voices.txt")
+                                       .Select(x => regex.Match(x))
+                                       .Where(x => x.Success)
+                                       .Select(x => new Voice(x.Groups["id"].ToString(),
+                                                              this.ToTitleCase(x.Groups["id"].ToString()),
+                                                              x.Groups["lang"].ToString()))
+                                       .ToImmutableArray();
+
+            this.Voice = this.AvailableVoices.First();
+
+            this.python = await new PythonInstaller()
+                   .EnableImports()
+                   .WithPip()
+                   .WithUV()
+                   .Version("3.13.14")
+                   .InstallAsync();
+        }
+
         public async Task StartAsync()
         {
-            var pythonClient = await new PythonInstaller()
-                    .EnableImports()
-                    .WithPip()
-                    .WithUV()
-                    .Version("3.13.14")
-                    .InstallAsync();
-
             const int localPort = 5000;
-            httpClient.BaseAddress = new Uri($"http://localhost:{localPort}");
-            process = pythonClient.ExecutePython($"-m uv tool run pocket-tts serve --host \"localhost\" --port {localPort}", Console.Out);
+            this.httpClient.BaseAddress = new Uri($"http://localhost:{localPort}");
+            this.process = this.python.ExecutePython($"-m uv tool run pocket-tts serve --host \"localhost\" --port {localPort}", Console.Out);
         }
 
         public async Task StopAsync()
         {
-            if (process is not null)
+            if (this.process is not null)
             {
-                process.Kill();
-                await process.WaitForExitAsync();
-                process.Dispose();
-                process = null;
+                this.process.Kill();
+                await this.process.WaitForExitAsync();
+                this.process.Dispose();
+                this.process = null;
             }
         }
 

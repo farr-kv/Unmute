@@ -1,0 +1,22 @@
+﻿<adonisControls:AdonisWindow x:Class="Unmute.App.WPF.UI.Windows.Splash.SplashWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:adonisUi="clr-namespace:AdonisUI;assembly=AdonisUI"
+        xmlns:adonisControls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
+        mc:Ignorable="d"
+        Title="SplashWindow" Height="450" Width="800"
+        Loaded="OnWindowLoaded"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"      
+        DataContext="{Binding RelativeSource={RelativeSource Self}}">
+    <Grid DockPanel.Dock="Top" Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Image Source="/Resources/splash_icon.png"/>
+    </Grid>
+</adonisControls:AdonisWindow>

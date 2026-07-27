@@ -1,0 +1,51 @@
+﻿<adonisControls:AdonisWindow x:Class="Unmute.App.WPF.UI.Windows.Settings.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:adonisUi="clr-namespace:AdonisUI;assembly=AdonisUI"
+        xmlns:adonisControls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
+        mc:Ignorable="d"
+        Title="Unmute" Height="450" Width="800"
+        Loaded="OnWindowLoaded"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}">
+
+    <Grid DockPanel.Dock="Top" Margin="8">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Column="0" Grid.Row="0" VerticalAlignment="Center" Text="Process"/>
+        <ComboBox Grid.Column="1" Grid.Row="0" Margin="8 0 8 0"
+              ItemsSource="{Binding RunningProcesses}"
+              SelectedItem="{Binding SelectedProcess}"
+              DisplayMemberPath="ProcessName"
+              DropDownOpened="OnLoadRunningProcesses"/>
+
+        <TextBlock Grid.Column="0" Grid.Row="1" VerticalAlignment="Center" Text="Voice"/>
+        <ComboBox Grid.Column="1" Grid.Row="1" Margin="8 0 8 0"
+              ItemsSource="{Binding AvailableVoices}"
+              SelectedItem="{Binding SelectedVoice}"
+              DisplayMemberPath="Name"/>
+        <Button Grid.Column="2" Grid.Row="1" Height="24" Width="24" VerticalAlignment="Center" ToolTip="Preview" Click="ButtonPreview_Click">
+            <Image Source="/Resources/icon_preview_voice.png"/>
+        </Button>
+
+        <Separator Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="4" Margin="8"></Separator>
+        <TextBlock Grid.Column="0" Grid.Row="3" VerticalAlignment="Center" Text="HotKeys:"/>
+        <TextBlock Grid.Column="0" Grid.Row="4" VerticalAlignment="Center" Text="Read Current Screen"/>
+        <TextBlock Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Center" Text="SHIFT + R"/>
+    </Grid>
+</adonisControls:AdonisWindow>

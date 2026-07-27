@@ -4,13 +4,17 @@ using OpenCvSharp;
 using Sdcb.PaddleOCR;
 using Sdcb.PaddleOCR.Models.Local;
 
-namespace Unmute.OCR
+namespace Unmute.OCR.PaddleOCR
 {
-    internal sealed class OCREngine : IOCREngine, IDisposable
+    internal sealed class PaddleOCREngine : IOCREngine, IDisposable
     {
-        private readonly PaddleOcrAll ocr;
+        private PaddleOcrAll ocr;
 
-        public OCREngine()
+        public PaddleOCREngine()
+        {
+        }
+
+        public Task InitializeAsync()
         {
             ocr = new PaddleOcrAll(LocalFullModels.EnglishV5, config =>
             {
@@ -20,6 +24,7 @@ namespace Unmute.OCR
                 AllowRotateDetection = false,
                 Enable180Classification = false,
             };
+            return Task.CompletedTask;
         }
 
         public async Task<IEnumerable<OCRResult>> ReadTextAsync(byte[] imageBytes)
