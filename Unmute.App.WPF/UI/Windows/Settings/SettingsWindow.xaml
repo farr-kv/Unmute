@@ -3,9 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:Unmute.App.WPF.UI.Controls"
         xmlns:adonisUi="clr-namespace:AdonisUI;assembly=AdonisUI"
         xmlns:adonisControls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
-        mc:Ignorable="d"
+                             mc:Ignorable="d"
         Title="Unmute" Height="450" Width="800"
         Loaded="OnWindowLoaded"
         DataContext="{Binding RelativeSource={RelativeSource Self}}">
@@ -51,18 +52,6 @@
             <TextBlock Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Center" Text="SHIFT + R"/>
         </Grid>
 
-        <Grid DockPanel.Dock="Top" Margin="8">
-            <Image x:Name="PreviewControl" Stretch="Uniform" Source="{Binding PreviewImage}" LayoutUpdated="OnPreviewChanged"/>
-
-            <Canvas x:Name="CropControl"
-            Background="Transparent">
-                <Rectangle x:Name="SelectionRect"
-                   Width="0"
-                   Height="0"
-                   Stroke="Red"
-                   StrokeThickness="2"
-                   Fill="#30FF0000"/>
-            </Canvas>
-        </Grid>
+        <controls:ImageCropControl x:Name="ImageCrop" DockPanel.Dock="Top" Margin="8"/>
     </DockPanel>
 </adonisControls:AdonisWindow>

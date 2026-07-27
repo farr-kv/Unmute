@@ -39,13 +39,6 @@ namespace Unmute.App.WPF.UI.Windows.Settings
                 this.OnPropertyChanged();
             }
         }
-        public ImageSource? PreviewImage { 
-            get => field;
-            set { 
-                field = value;
-                this.OnPropertyChanged();
-            }
-        }
 
         private readonly IApplicationMonitor appMonitor;
         private readonly ITtsService ttsService;
@@ -72,25 +65,12 @@ namespace Unmute.App.WPF.UI.Windows.Settings
         {
             if (this.SelectedProcess is null)
             {
-                this.PreviewImage = null;
+                this.ImageCrop.PreviewImage = null;
                 return;
             }
 
             var bytes = await this.appMonitor.GetProcessScreenshotAsync(this.SelectedProcess);
-            this.PreviewImage = this.ToImageSource(bytes);
-        }
-
-        private void OnPreviewChanged(object sender, EventArgs e)
-        {
-            // TODO resizable rectangle
-            // TODO draggable rectangle
-            // TODO translate Top,Left,Bottom,Right bounds to a perc of total height/width to account for resizing of either this or the source application
-            this.CropControl.Width = this.PreviewControl?.ActualWidth ?? 0;
-            this.CropControl.Height = this.PreviewControl?.ActualHeight ?? 0;
-            this.SelectionRect.Width = this.PreviewControl?.ActualWidth ?? 0;
-            this.SelectionRect.Height = this.PreviewControl?.ActualHeight ?? 0;
-            Canvas.SetTop(this.SelectionRect, 0);
-            Canvas.SetLeft(this.SelectionRect, 0);
+            this.ImageCrop.PreviewImage = this.ToImageSource(bytes);
         }
 
         private void OnWindowLoaded(object sender, RoutedEventArgs e)
