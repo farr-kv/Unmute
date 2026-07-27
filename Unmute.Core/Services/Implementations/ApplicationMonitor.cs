@@ -51,11 +51,17 @@ namespace Unmute.Core.Services.Implementations
 
         public async Task<string> MonitorProcessAsync(Process process)
         {
-            var bytes = ScreenCaptureInterop.Capture(process);
+            var bytes = await GetProcessScreenshotAsync(process);
             if (bytes is null)
                 return string.Empty;
 
             return await this.ExtractTextFromImageAsync(bytes);
+        }
+
+        public async Task<byte[]?> GetProcessScreenshotAsync(Process process)
+        {
+            var bytes = ScreenCaptureInterop.Capture(process);
+            return bytes;
         }
 
         private async Task<string> ExtractTextFromImageAsync(byte[] bytes)

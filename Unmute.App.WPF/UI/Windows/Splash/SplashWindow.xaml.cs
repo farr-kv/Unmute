@@ -1,6 +1,7 @@
 ﻿using AdonisUI.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using Unmute.App.WPF.Extensions;
 using Unmute.App.WPF.UI.Windows.Settings;
@@ -11,9 +12,6 @@ namespace Unmute.App.WPF.UI.Windows.Splash
     public partial class SplashWindow : AdonisWindow, INotifyPropertyChanged
     {
         private readonly IServiceProvider serviceProvider;
-
-        public bool Loading { get; private set; } = true;
-        public event PropertyChangedEventHandler? PropertyChanged;
 
         public SplashWindow(IServiceProvider serviceProvider)
         {
@@ -41,7 +39,6 @@ namespace Unmute.App.WPF.UI.Windows.Splash
                 }
                 finally
                 {
-                    Loading = false;
                     this.RunOnUiThread(() => this.Close()); 
                 }
             });
@@ -51,5 +48,14 @@ namespace Unmute.App.WPF.UI.Windows.Splash
         {
             this.DragMove();
         }
+
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string? name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+        #endregion
     }
 }
