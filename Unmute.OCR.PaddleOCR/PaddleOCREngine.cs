@@ -1,8 +1,8 @@
-﻿using Unmute.Core.Models;
-using Unmute.Core.Services;
-using OpenCvSharp;
+﻿using OpenCvSharp;
 using Sdcb.PaddleOCR;
 using Sdcb.PaddleOCR.Models.Local;
+using Unmute.Core.Models;
+using Unmute.Core.Services;
 
 namespace Unmute.OCR.PaddleOCR
 {
@@ -18,7 +18,10 @@ namespace Unmute.OCR.PaddleOCR
         {
             ocr = new PaddleOcrAll(LocalFullModels.EnglishV5, config =>
             {
+                // TODO detect from cpu/gpu architecture
                 config.OneDnnEnabled = true;
+                config.CpuMathThreadCount = 8;
+                config.UseGpu = true;
             })
             {
                 AllowRotateDetection = false,
@@ -27,11 +30,11 @@ namespace Unmute.OCR.PaddleOCR
             return Task.CompletedTask;
         }
 
-        public async Task<IEnumerable<OCRResult>> ReadTextAsync(byte[] imageBytes)
+        public Task<IEnumerable<OCRResult>> ReadTextAsync(byte[] imageBytes)
         {
             using Mat image = Cv2.ImDecode(imageBytes, ImreadModes.Color);
-            var result = ocr.Run(image);
-            return result.Regions.Select(r => new OCRResult(r.Text, r.Score));
+            var results = ocr.Run(image).Regions.Select(r => new OCRResult(r.Text, r.Score));
+            return Task.FromResult(results);
         }
 
         public void Dispose()

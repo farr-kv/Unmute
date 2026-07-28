@@ -4,7 +4,6 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Unmute.App.CLI/Unmute.App.CLI.csproj" Id="54cc19f8-941d-4c98-bc77-f366199721c8" />
   <Project Path="Unmute.App.WPF/Unmute.App.WPF.csproj" Id="c58b64b8-af74-4186-a580-361d76aee4ca" />
   <Project Path="Unmute.Core/Unmute.Core.csproj">
     <BuildDependency Project="Unmute.ScreenCapture/Unmute.ScreenCapture.vcxproj" />

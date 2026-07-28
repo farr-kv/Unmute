@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Unmute.Core.Interops
 {
-    internal static class ScreenCaptureInterop
+    public static class ScreenCaptureInterop
     {
         [DllImport("Unmute.ScreenCapture.dll", SetLastError = true)]
         private static extern bool CaptureWindowToBuffer(IntPtr hwnd, out IntPtr buffer, out uint size);

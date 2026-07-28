@@ -1,14 +1,18 @@
 ﻿using AdonisUI.Controls;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Unmute.App.WPF.Extensions;
+using Unmute.App.WPF.UI.Windows.Snipping;
+using Unmute.Core.Interops;
 using Unmute.Core.Models;
 using Unmute.Core.Services;
 
@@ -16,8 +20,8 @@ namespace Unmute.App.WPF.UI.Windows.Settings
 {
     public partial class SettingsWindow : AdonisWindow, INotifyPropertyChanged, IDisposable
     {
-        private const int HOTKEY_READ_SCREEN = 9000;
-        private const int HOTKEY_AUTO_READ = 9001;
+        private const int HOTKEY_READ_SCREENSHOT = 9000;
+        private const int HOTKEY_READ_APP = 9001;
 
         public ObservableCollection<Process> RunningProcesses { get; } = new ();
         public ObservableCollection<Voice> AvailableVoices { get; } = new ();
@@ -40,13 +44,13 @@ namespace Unmute.App.WPF.UI.Windows.Settings
             }
         }
 
-        private readonly IApplicationMonitor appMonitor;
         private readonly ITtsService ttsService;
+        private readonly IOCREngine ocrEngine;
 
-        public SettingsWindow(IApplicationMonitor appMonitor, ITtsService ttsService)
+        public SettingsWindow(ITtsService ttsService, IOCREngine ocrEngine)
         {
-            this.appMonitor = appMonitor;
             this.ttsService = ttsService;
+            this.ocrEngine = ocrEngine;
             this.InitializeComponent();
         }
 
@@ -61,7 +65,7 @@ namespace Unmute.App.WPF.UI.Windows.Settings
             }
         }
 
-        private async void OnSelectedProcessChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void OnSelectedProcessChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             if (this.SelectedProcess is null)
             {
@@ -69,7 +73,7 @@ namespace Unmute.App.WPF.UI.Windows.Settings
                 return;
             }
 
-            var bytes = await this.appMonitor.GetProcessScreenshotAsync(this.SelectedProcess);
+            var bytes = ScreenCaptureInterop.Capture(this.SelectedProcess);
             this.ImageCrop.PreviewImage = this.ToImageSource(bytes);
         }
 
@@ -80,27 +84,52 @@ namespace Unmute.App.WPF.UI.Windows.Settings
                 this.AvailableVoices.Add(voice);
             }
 
-            // TODO make this key rebindable
-            this.RegisterHotkey(HOTKEY_READ_SCREEN,
-                System.Windows.Input.ModifierKeys.Shift,
+            this.RegisterHotkey(HOTKEY_READ_SCREENSHOT,
+                System.Windows.Input.ModifierKeys.Control | System.Windows.Input.ModifierKeys.Shift,
+                System.Windows.Input.Key.T,
+                async () =>
+                {
+                    var bmp = await SnippingWindow.TakeScreenshotAsync();
+                    if (bmp is null)
+                        return;
+
+                    using var ms = new MemoryStream();
+                    bmp.Save(ms, ImageFormat.Png);
+
+                    var ocrResults = await this.ocrEngine.ReadTextAsync(ms.ToArray());
+                    if (ocrResults is null)
+                        return;
+
+                    var text = string.Join(Environment.NewLine, ocrResults.Where(x => x.Confidence > 0.75).Select(x => x.Text));
+                    await this.ttsService.NarrateAsync(text);
+                });
+
+            this.RegisterHotkey(HOTKEY_READ_APP,
+                System.Windows.Input.ModifierKeys.Control | System.Windows.Input.ModifierKeys.Shift,
                 System.Windows.Input.Key.R,
                 async () =>
                 {
-                    if (this.SelectedProcess is null)
+                    if (!this.IsProcessRunning())
                         return;
 
-                    if (this.IsProcessRunning())
-                    {
-                        var text = await this.appMonitor.MonitorProcessAsync(this.SelectedProcess);
-                        await this.ttsService.NarrateAsync(text);
-                    }
+                    var bytes = ScreenCaptureInterop.Capture(this.SelectedProcess!);
+                    if (bytes is null)
+                        return;
+
+                    var cropped = this.ApplyCropToImage(bytes);
+                    var ocrResults = await this.ocrEngine.ReadTextAsync(cropped);
+                    if (ocrResults is null)
+                        return;
+
+                    var text = string.Join(Environment.NewLine, ocrResults.Where(x => x.Confidence > 0.75).Select(x => x.Text));
+                    await this.ttsService.NarrateAsync(text);
                 });
         }
 
         public void Dispose()
         {
-            this.DeregisterHotkey(HOTKEY_READ_SCREEN);
-            this.DeregisterHotkey(HOTKEY_AUTO_READ);
+            this.DeregisterHotkey(HOTKEY_READ_SCREENSHOT);
+            this.DeregisterHotkey(HOTKEY_READ_APP);
         }
 
         private void Titlebar_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -153,6 +182,27 @@ namespace Unmute.App.WPF.UI.Windows.Settings
             bitmap.Freeze();
 
             return bitmap;
+        }
+
+        private byte[] ApplyCropToImage(byte[] bytes)
+        {
+            var cropAreaPercentages = this.ImageCrop.CropArea;
+
+            using var ms = new MemoryStream(bytes);
+            using var bmp = new Bitmap(ms);
+            var cropArea = new Rectangle
+            {
+                X = (int)(bmp.Width * cropAreaPercentages.Left),
+                Y = (int)(bmp.Height * cropAreaPercentages.Top),
+                Width = (int)(bmp.Width * cropAreaPercentages.Width),
+                Height = (int)(bmp.Height * cropAreaPercentages.Height),
+            };
+
+            using var cropped = bmp.Clone(cropArea, bmp.PixelFormat);
+            using var outputStream = new MemoryStream();
+            cropped.Save(outputStream, ImageFormat.Png);
+
+            return outputStream.ToArray();
         }
 
         #region INotifyPropertyChanged

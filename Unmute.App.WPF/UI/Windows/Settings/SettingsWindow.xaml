@@ -48,8 +48,8 @@
 
             <Separator Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="4" Margin="8"></Separator>
             <TextBlock Grid.Column="0" Grid.Row="3" VerticalAlignment="Center" Text="HotKeys:"/>
-            <TextBlock Grid.Column="0" Grid.Row="4" VerticalAlignment="Center" Text="Read Current Screen"/>
-            <TextBlock Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Center" Text="SHIFT + R"/>
+            <TextBlock Grid.Column="0" Grid.Row="4" VerticalAlignment="Center" Text="Read Adhoc Screen Capture"/>
+            <TextBlock Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Center" Text="WIN + SHIFT + R"/>
         </Grid>
 
         <controls:ImageCropControl x:Name="ImageCrop" DockPanel.Dock="Top" Margin="8"/>

@@ -11,56 +11,60 @@
         <Image x:Name="PreviewControl" Stretch="Uniform" Source="{Binding PreviewImage}" LayoutUpdated="OnPreviewChanged"/>
         
         <Canvas x:Name="CropControl" Background="Transparent">
-            <Grid x:Name="SelectionRect"
+            <Grid x:Name="SelectionContainer"
                   Width="0"
-                  Height="0"
-                  MouseLeftButtonDown="SelectionRect_MouseLeftButtonDown"
-                  MouseLeftButtonUp="SelectionRect_MouseLeftButtonUp"
-                  MouseMove="SelectionRect_MouseMove">
+                  Height="0">
 
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="Space_Left" Width="0" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition x:Name="Space_Right" Width="0" />
                 </Grid.ColumnDefinitions>
 
                 <Grid.RowDefinitions>
+                    <RowDefinition x:Name="Space_Top" Height="0"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition x:Name="Space_Bottom" Height="0"/>
                 </Grid.RowDefinitions>
 
-                <Rectangle
-                   Grid.Column="1"
-                   Grid.Row="1"
-                   Stroke="Red"
+                <Rectangle x:Name="SelectionRect"
+                   Grid.Column="2"
+                   Grid.Row="2"
+                   Fill="Transparent"
+                   Stroke="Transparent"
                    StrokeThickness="2"
-                   Fill="#30FF0000"/>
+                   MouseLeftButtonDown="SelectionRect_MouseLeftButtonDown"
+                   MouseLeftButtonUp="SelectionRect_MouseLeftButtonUp"
+                   MouseMove="SelectionRect_MouseMove"/>
 
                 <Thumb x:Name="ThumbNW"
-                    Grid.Column="0"
-                    Grid.Row="0"
+                    Grid.Column="1"
+                    Grid.Row="1"
                     Width="10"
                     Height="10"
                     Cursor="SizeNWSE"/>
 
                 <Thumb x:Name="ThumbSE"
-                    Grid.Column="2"
-                    Grid.Row="2"
+                    Grid.Column="3"
+                    Grid.Row="3"
                     Width="10"
                     Height="10"
                     Cursor="SizeNWSE"/>
 
                 <Thumb x:Name="ThumbNE"
-                    Grid.Column="2"
-                    Grid.Row="0"
+                    Grid.Column="3"
+                    Grid.Row="1"
                     Width="10"
                     Height="10"
                     Cursor="SizeNESW"/>
 
                 <Thumb x:Name="ThumbSW"
-                    Grid.Column="0"
-                    Grid.Row="2"
+                    Grid.Column="1"
+                    Grid.Row="3"
                     Width="10"
                     Height="10"
                     Cursor="SizeNESW"/>

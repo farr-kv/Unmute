@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,25 +18,52 @@ namespace Unmute.App.WPF.UI.Controls
             set
             {
                 field = value;
-                left = 0f; 
-                top = 0f;
-                right = 1f;
-                bottom = 1f;
-
                 this.OnPropertyChanged();
             }
         }
 
+        public RectangleF CropArea => new(left, top, right - left, bottom - top);
+
         public ImageCropControl()
         {
+            right = 1f;
+            bottom = 1f;
             InitializeComponent();
             RegisterThumbHandlers();
+            AddDimmedRegion();
         }
 
-        public byte[] ApplyCropToImage(byte[] imageBytes)
+        private void AddDimmedRegion()
         {
-            // TODO
-            return null;
+            var columns = this.SelectionContainer.ColumnDefinitions;
+            var rows = this.SelectionContainer.RowDefinitions;
+
+            var gridChildren = new HashSet<(int,int)>();
+            foreach (UIElement child in this.SelectionContainer.Children)
+            {
+                gridChildren.Add((Grid.GetColumn(child), Grid.GetRow(child)));
+            }
+
+            var brush = new SolidColorBrush(Colors.Black)
+            {
+                Opacity = 0.75f
+            };
+            for (var i = 0; i < columns.Count; i++)
+            {
+                for (var j = 0; j < rows.Count; j++)
+                {
+                    if (gridChildren.Contains((i, j)))
+                        continue;
+
+                    var rect = new System.Windows.Shapes.Rectangle
+                    {
+                        Fill = brush
+                    };
+                    Grid.SetColumn(rect, i);
+                    Grid.SetRow(rect, j);
+                    this.SelectionContainer.Children.Add(rect);
+                }
+            }
         }
 
         private void OnPreviewChanged(object sender, EventArgs e)
@@ -47,14 +75,17 @@ namespace Unmute.App.WPF.UI.Controls
         {
             this.CropControl.Width = this.PreviewControl?.ActualWidth ?? 0;
             this.CropControl.Height = this.PreviewControl?.ActualHeight ?? 0;
-            this.SelectionRect.Width = this.CropControl.Width * (right - left);
-            this.SelectionRect.Height = this.CropControl.Height * (bottom - top);
-            Canvas.SetTop(this.SelectionRect, this.CropControl.Height * top);
-            Canvas.SetLeft(this.SelectionRect, this.CropControl.Width * left);
+            this.SelectionContainer.Width = this.CropControl.Width;
+            this.SelectionContainer.Height = this.CropControl.Height;
+
+            this.Space_Left.Width = new GridLength(this.CropControl.Width * left);
+            this.Space_Top.Height = new GridLength(this.CropControl.Height * top);
+            this.Space_Right.Width = new GridLength(this.CropControl.Width * (1 - right));
+            this.Space_Bottom.Height = new GridLength(this.CropControl.Height * (1 - bottom));
         }
 
         #region dragging        
-        private Point dragStartPoint;
+        private System.Windows.Point dragStartPoint;
         private bool isDragging;
 
         private void SelectionRect_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

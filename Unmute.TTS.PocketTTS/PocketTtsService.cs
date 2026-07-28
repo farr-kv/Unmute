@@ -48,16 +48,19 @@ namespace Unmute.TTS.PocketTTS
             if (voice is null)
                 voice = this.Voice;
 
-            using var request = new MultipartFormDataContent();
-            request.Add(new StringContent(text), "text");
-            request.Add(new StringContent(voice.Id), "voice_url");
-            var response = await this.httpClient.PostAsync("tts", request);
-            if (!response.IsSuccessStatusCode)
-                return;
-            
-            using var stream = await response.Content.ReadAsStreamAsync();
-            using var wav = await this.FixWavStream(stream);
-            await this.playback.PlayAsync(wav);
+            var lines = text.Split(['.', '?', '!' ], StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
+            {
+                using var request = new MultipartFormDataContent();
+                request.Add(new StringContent(line), "text");
+                request.Add(new StringContent(voice.Id), "voice_url");
+                var response = await this.httpClient.PostAsync("tts", request);
+                if (!response.IsSuccessStatusCode)
+                    continue;
+
+                using var stream = await response.Content.ReadAsStreamAsync();
+                await this.playback.PlayAsync(stream);
+            }
         }
 
         public async Task InitializeAsync()
@@ -103,23 +106,6 @@ namespace Unmute.TTS.PocketTTS
         {
             this.StopAsync().Wait();
             this.playback.Dispose();
-        }
-
-        // PocketTTS does not set the length as it streams the audio. This needs to be corrected before initiating playback
-        private async Task<Stream> FixWavStream(Stream stream)
-        {
-            var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);
-            var buffer = ms.GetBuffer();
-            var totalLength = (int)ms.Length;
-
-            var riffSize = totalLength - 8;
-            BitConverter.GetBytes(riffSize).CopyTo(buffer, 4);
-            var dataSize = totalLength - 44;
-            BitConverter.GetBytes(dataSize).CopyTo(buffer, 40);
-
-            ms.Position = 0;
-            return ms;
         }
 
         private string ToTitleCase(string name)

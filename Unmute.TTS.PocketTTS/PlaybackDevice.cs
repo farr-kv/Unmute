@@ -1,61 +1,48 @@
-﻿using SoundFlow.Abstracts.Devices;
-using SoundFlow.Backends.MiniAudio;
-using SoundFlow.Components;
-using SoundFlow.Providers;
-using SoundFlow.Structs;
-using Unmute.Core;
+﻿using NAudio.Wave;
 
 namespace Unmute.TTS.PocketTTS
 {
     internal class PlaybackDevice: IDisposable
     {
-        private AudioFormat Format { get; }
-        private MiniAudioEngine Engine { get; }
-        private AudioPlaybackDevice AudioPlaybackDevice { get; }
-        private IDisposable? playbackTask;
+        private readonly BufferedWaveProvider provider;
+        private readonly WaveOutEvent player;
 
         public PlaybackDevice()
         {
-            this.Format = AudioFormat.Cd;
-            this.Engine = new MiniAudioEngine();
-            this.Engine.UpdateAudioDevicesInfo();
-            var defaultDevice = this.Engine.PlaybackDevices.FirstOrDefault(x => x.IsDefault);
-            this.AudioPlaybackDevice = this.Engine.InitializePlaybackDevice(defaultDevice, this.Format);
-            this.AudioPlaybackDevice.Start();
+            var waveFormat = new WaveFormat(24000, 16, 1);
+            provider = new BufferedWaveProvider(waveFormat)
+            {
+                BufferDuration = TimeSpan.FromSeconds(30)
+            };
+            player = new WaveOutEvent();
+
+            player.Init(provider);
+            player.Play();
         }
 
         public void Dispose()
         {
-            this.playbackTask?.Dispose();
-            this.AudioPlaybackDevice.Dispose();
-            this.Engine.Dispose();
+            player.Dispose();
         }
 
-        public Task PlayAsync(Stream stream)
+        public async Task PlayAsync(Stream stream)
         {
-            this.Stop();
-
-            var dataProvider = new StreamDataProvider(this.Engine, this.Format, stream);
-            var player = new SoundPlayer(this.Engine, this.Format, dataProvider);
-            this.AudioPlaybackDevice.MasterMixer.AddComponent(player);
-
-            this.playbackTask = new DisposableAction(() =>
+            using var reader = new WaveFileReader(stream);
+            var bytesRead = 0;
+            var buffer = new byte[4096];
+            while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
             {
-                this.AudioPlaybackDevice.MasterMixer.RemoveComponent(player);
-                player.Dispose();
-                dataProvider.Dispose();
-                this.playbackTask = null;
-            });
-
-            var tcs = new TaskCompletionSource<bool>();
-            player.PlaybackEnded += (_, _) => tcs.SetResult(true);
-            player.Play();
-            return tcs.Task;
+                while (provider.BufferedBytes + bytesRead > provider.BufferLength)
+                {
+                    await Task.Delay(20);
+                }
+                provider.AddSamples(buffer, 0, bytesRead);
+            }
         }
 
         public void Stop()
         {
-            this.playbackTask?.Dispose();
+            provider.ClearBuffer();
         }
     }
 }
