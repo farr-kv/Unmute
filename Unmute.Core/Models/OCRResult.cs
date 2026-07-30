@@ -1,4 +1,8 @@
 ﻿namespace Unmute.Core.Models
 {
-    public record OCRResult(string Text, float Confidence);
+    public class OCRResult
+    {
+        public string Text { get; set; }
+        public Bounds Bounds { get; set; }
+    }
 }

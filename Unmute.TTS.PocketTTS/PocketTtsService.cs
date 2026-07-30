@@ -11,6 +11,7 @@ namespace Unmute.TTS.PocketTTS
     {
         private readonly HttpClient httpClient = new();
         private readonly PlaybackDevice playback = new();
+        private readonly CancellationTokenSource cts = new();
 
         private PythonClient python;
         private Process? process;
@@ -59,7 +60,7 @@ namespace Unmute.TTS.PocketTTS
                     continue;
 
                 using var stream = await response.Content.ReadAsStreamAsync();
-                await this.playback.PlayAsync(stream);
+                await this.playback.PlayAsync(stream, this.cts.Token);
             }
         }
 
@@ -104,6 +105,7 @@ namespace Unmute.TTS.PocketTTS
 
         public void Dispose()
         {
+            this.cts.Cancel();
             this.StopAsync().Wait();
             this.playback.Dispose();
         }

@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
+		<PackageReference Include="OpenCvSharp4.Extensions" Version="4.13.0.20260627" />
 		<PackageReference Include="Sdcb.PaddleOCR" Version="3.3.1" />
 		<PackageReference Include="Sdcb.PaddleOCR.Models.Local" Version="3.3.1" />
 		<PackageReference Include="Sdcb.PaddleOCR.Models.LocalV5" Version="3.3.1" />

@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using Unmute.App.WPF.Extensions;
-using Unmute.App.WPF.UI.Windows.Settings;
+using Unmute.App.WPF.UI.Windows.Overlay;
 using Unmute.Core.Services;
 
 namespace Unmute.App.WPF.UI.Windows.Splash
@@ -33,7 +33,7 @@ namespace Unmute.App.WPF.UI.Windows.Splash
                     await ttsService.StartAsync();
                     
                     this.RunOnUiThread(() => {
-                        var nextWindow = serviceProvider.GetRequiredService<SettingsWindow>();
+                        var nextWindow = serviceProvider.GetRequiredService<OverlayWindow>();
                         nextWindow.Show();
                     });
                 }

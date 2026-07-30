@@ -9,6 +9,7 @@
 	<SolidColorBrush x:Key="ColourNegative" Color="#CC0000" />
     <SolidColorBrush x:Key="ColourBackground" Color="#22222a" />
     <SolidColorBrush x:Key="ColourBackgroundDimmed" Color="#A0000000" />
+    <SolidColorBrush x:Key="ColourOverlayHightlight" Color="#2784F5" />
 
     <SolidColorBrush x:Key="ColourFocus1" Color="#40FFFFFF" />
     <SolidColorBrush x:Key="ColourFocus2" Color="#80FFFFFF" />

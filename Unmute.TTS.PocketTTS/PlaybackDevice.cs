@@ -25,7 +25,7 @@ namespace Unmute.TTS.PocketTTS
             player.Dispose();
         }
 
-        public async Task PlayAsync(Stream stream)
+        public async Task PlayAsync(Stream stream, CancellationToken token)
         {
             using var reader = new WaveFileReader(stream);
             var bytesRead = 0;
@@ -34,7 +34,7 @@ namespace Unmute.TTS.PocketTTS
             {
                 while (provider.BufferedBytes + bytesRead > provider.BufferLength)
                 {
-                    await Task.Delay(20);
+                    await Task.Delay(20, token);
                 }
                 provider.AddSamples(buffer, 0, bytesRead);
             }

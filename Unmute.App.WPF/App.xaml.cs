@@ -7,6 +7,7 @@ using Unmute.App.WPF.UI.Windows.Settings;
 using Unmute.Core.Extensions;
 using Unmute.TTS.PocketTTS.Extensions;
 using Unmute.OCR.PaddleOCR.Extensions;
+using Unmute.App.WPF.UI.Windows.Overlay;
 
 namespace Unmute.App.WPF
 {
@@ -43,8 +44,9 @@ namespace Unmute.App.WPF
                     .UsePocketTTS();
 
             // Windows
-            services.AddSingleton<SplashWindow>();
-            services.AddSingleton<SettingsWindow>();
+            services.AddTransient<SplashWindow>();
+            services.AddTransient<SettingsWindow>();
+            services.AddTransient<OverlayWindow>();
         }
 
         private void OnExit(object sender, ExitEventArgs e)
