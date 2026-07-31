@@ -1,33 +1,25 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace Unmute.Core.Interops
 {
     public static class ScreenCaptureInterop
     {
-        [DllImport("Unmute.ScreenCapture.dll", SetLastError = true)]
-        private static extern bool CaptureWindowToBuffer(IntPtr hwnd, out IntPtr buffer, out uint size);
+        [DllImport("Unmute.ScreenCapture.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern bool InitializeCapture();
 
-        [DllImport("Unmute.ScreenCapture.dll")]
-        private static extern void FreeCaptureBuffer(IntPtr buffer);
+        [DllImport("Unmute.ScreenCapture.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void ShutdownCapture();
 
-        public static byte[]? Capture(Process proc)
-        {
-            if (!CaptureWindowToBuffer(proc.MainWindowHandle, out IntPtr buffer, out uint size))
-            {
-                return null;
-            }                
+        [DllImport("Unmute.ScreenCapture.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern bool GetCaptureSize(
+            out int width,
+            out int height);
 
-            try
-            {
-                var result = new byte[size];
-                Marshal.Copy(buffer, result, 0, (int)size);
-                return result;
-            }
-            finally
-            {
-                FreeCaptureBuffer(buffer);
-            }
-        }
+        [DllImport("Unmute.ScreenCapture.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern bool CaptureFrame(
+            IntPtr destination,
+            int destinationSize,
+            out int width,
+            out int height);
     }
 }

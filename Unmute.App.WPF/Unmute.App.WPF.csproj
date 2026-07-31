@@ -6,17 +6,25 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Resources\icon_close.png" />
     <None Remove="Resources\icon_preview_voice.png" />
+    <None Remove="Resources\icon_settings.png" />
+    <None Remove="Resources\logo.ico" />
     <None Remove="Resources\splash_icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\logo.ico" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AdonisUI" Version="1.17.1" />
     <PackageReference Include="AdonisUI.ClassicTheme" Version="1.17.1" />
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
@@ -32,6 +40,8 @@
   <ItemGroup>
     <Resource Include="Resources\icon_close.png" />
     <Resource Include="Resources\icon_preview_voice.png" />
+    <Resource Include="Resources\icon_settings.png" />
+    <Resource Include="Resources\logo.ico" />
     <Resource Include="Resources\splash_icon.png" />
   </ItemGroup>
 

@@ -1,183 +1,194 @@
 // THIS IS CLANKER CODE. RIP
 
 #include "pch.h"
-#include "window_capture.h"
+#include "screen_capture.h"
 
-using namespace winrt;
-using namespace winrt::Windows::Graphics::Capture;
-using namespace winrt::Windows::Graphics::DirectX;
-using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
+#include <d3d11.h>
+#include <dxgi1_2.h>
 
-// ---- 1. Get a GraphicsCaptureItem for an HWND (no picker dialog needed) ----
-static GraphicsCaptureItem CreateCaptureItemForWindow(HWND hwnd)
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "dxgi.lib")
+
+static ID3D11Device* gDevice = nullptr;
+static ID3D11DeviceContext* gContext = nullptr;
+static IDXGIOutputDuplication* gDuplication = nullptr;
+static ID3D11Texture2D* gStaging = nullptr;
+
+static UINT gWidth = 0;
+static UINT gHeight = 0;
+
+bool InitializeCapture()
 {
-    auto factory = get_activation_factory<GraphicsCaptureItem>();
-    auto interop = factory.as<IGraphicsCaptureItemInterop>();
-    GraphicsCaptureItem item{ nullptr };
-    check_hresult(interop->CreateForWindow(hwnd, guid_of<GraphicsCaptureItem>(), put_abi(item)));
-    return item;
-}
+    if (gDuplication)
+        return true;
 
-// ---- 2. D3D11 device + WinRT IDirect3DDevice wrapper ----
-static com_ptr<ID3D11Device> CreateD3DDevice()
-{
-    com_ptr<ID3D11Device> device;
-    D3D_FEATURE_LEVEL fl;
-    check_hresult(D3D11CreateDevice(
-        nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
-        D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-        nullptr, 0, D3D11_SDK_VERSION,
-        device.put(), &fl, nullptr));
-    return device;
-}
+    HRESULT hr;
 
-static IDirect3DDevice CreateDirect3DDevice(com_ptr<ID3D11Device> const& d3dDevice)
-{
-    auto dxgiDevice = d3dDevice.as<IDXGIDevice>();
-    com_ptr<::IInspectable> inspectable;
-    check_hresult(CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice.get(), inspectable.put()));
-    return inspectable.as<IDirect3DDevice>();
-}
+    D3D_FEATURE_LEVEL level;
 
-// ---- 3. Grab exactly one frame, synchronously ----
-static com_ptr<ID3D11Texture2D> CaptureOneFrame(
-    HWND hwnd, com_ptr<ID3D11Device> const& d3dDevice, IDirect3DDevice const& device,
-    winrt::Windows::Graphics::SizeInt32& outSize)
-{
-    auto item = CreateCaptureItemForWindow(hwnd);
-    auto size = item.Size();
-    outSize = size;
+    hr = D3D11CreateDevice(
+        nullptr,
+        D3D_DRIVER_TYPE_HARDWARE,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        D3D11_SDK_VERSION,
+        &gDevice,
+        &level,
+        &gContext);
 
-    HANDLE frameEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
-    com_ptr<ID3D11Texture2D> result;
-
-    auto framePool = Direct3D11CaptureFramePool::CreateFreeThreaded(
-        device, DirectXPixelFormat::B8G8R8A8UIntNormalized, 1, size);
-
-    auto session = framePool.CreateCaptureSession(item);
-
-    framePool.FrameArrived([&](auto& sender, auto&)
-        {
-            if (auto frame = sender.TryGetNextFrame())
-            {
-                auto access = frame.Surface().as<
-                    ::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>();
-                com_ptr<ID3D11Texture2D> tex;
-                access->GetInterface(guid_of<ID3D11Texture2D>(), tex.put_void());
-                result = tex;
-                SetEvent(frameEvent);
-            }
-        });
-
-    session.StartCapture();
-    WaitForSingleObject(frameEvent, 5000); // 5s timeout is plenty for a single frame
-    CloseHandle(frameEvent);
-    session.Close();
-    framePool.Close();
-
-    return result;
-}
-
-// ---- 4. Encode the GPU texture to an in-memory PNG buffer via WIC ----
-static bool EncodeTextureToBuffer(com_ptr<ID3D11Device> const& d3dDevice, com_ptr<ID3D11Texture2D> const& texture, BYTE** outBuffer, UINT32* outSize)
-{
-    if (!texture) return false;
-
-    D3D11_TEXTURE2D_DESC desc;
-    texture->GetDesc(&desc);
-
-    D3D11_TEXTURE2D_DESC stagingDesc = desc;
-    stagingDesc.Usage = D3D11_USAGE_STAGING;
-    stagingDesc.BindFlags = 0;
-    stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-    stagingDesc.MiscFlags = 0;
-
-    com_ptr<ID3D11Texture2D> staging;
-    check_hresult(d3dDevice->CreateTexture2D(&stagingDesc, nullptr, staging.put()));
-
-    com_ptr<ID3D11DeviceContext> ctx;
-    d3dDevice->GetImmediateContext(ctx.put());
-    ctx->CopyResource(staging.get(), texture.get());
-
-    D3D11_MAPPED_SUBRESOURCE mapped;
-    check_hresult(ctx->Map(staging.get(), 0, D3D11_MAP_READ, 0, &mapped));
-
-    com_ptr<IWICImagingFactory> wic;
-    check_hresult(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
-        IID_PPV_ARGS(wic.put())));
-
-    // In-memory stream instead of a file stream
-    com_ptr<IStream> stream;
-    check_hresult(CreateStreamOnHGlobal(nullptr, TRUE, stream.put()));
-
-    com_ptr<IWICBitmapEncoder> encoder;
-    check_hresult(wic->CreateEncoder(GUID_ContainerFormatPng, nullptr, encoder.put()));
-    check_hresult(encoder->Initialize(stream.get(), WICBitmapEncoderNoCache));
-
-    com_ptr<IWICBitmapFrameEncode> frame;
-    check_hresult(encoder->CreateNewFrame(frame.put(), nullptr));
-    check_hresult(frame->Initialize(nullptr));
-    check_hresult(frame->SetSize(desc.Width, desc.Height));
-    WICPixelFormatGUID format = GUID_WICPixelFormat32bppBGRA;
-    check_hresult(frame->SetPixelFormat(&format));
-    check_hresult(frame->WritePixels(desc.Height, mapped.RowPitch, mapped.RowPitch * desc.Height, static_cast<BYTE*>(mapped.pData)));
-
-    ctx->Unmap(staging.get(), 0);
-
-    check_hresult(frame->Commit());
-    check_hresult(encoder->Commit());
-
-    // Pull the encoded PNG bytes out of the HGLOBAL backing the stream
-    HGLOBAL hGlobal = nullptr;
-    check_hresult(GetHGlobalFromStream(stream.get(), &hGlobal));
-
-    SIZE_T size = GlobalSize(hGlobal);
-    void* src = GlobalLock(hGlobal);
-    if (!src) return false;
-
-    BYTE* dest = static_cast<BYTE*>(CoTaskMemAlloc(size));
-    if (!dest)
-    {
-        GlobalUnlock(hGlobal);
+    if (FAILED(hr))
         return false;
-    }
-    memcpy(dest, src, size);
-    GlobalUnlock(hGlobal);
 
-    *outBuffer = dest;
-    *outSize = static_cast<UINT32>(size);
+    IDXGIDevice* dxgiDevice = nullptr;
+    hr = gDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+    if (FAILED(hr))
+        return false;
+
+    IDXGIAdapter* adapter = nullptr;
+    dxgiDevice->GetAdapter(&adapter);
+
+    IDXGIOutput* output = nullptr;
+    adapter->EnumOutputs(0, &output);
+
+    IDXGIOutput1* output1 = nullptr;
+    output->QueryInterface(__uuidof(IDXGIOutput1), (void**)&output1);
+
+    hr = output1->DuplicateOutput(gDevice, &gDuplication);
+
+    output1->Release();
+    output->Release();
+    adapter->Release();
+    dxgiDevice->Release();
+
+    if (FAILED(hr))
+        return false;
+
+    DXGI_OUTDUPL_DESC dupDesc;
+    gDuplication->GetDesc(&dupDesc);
+
+    gWidth = dupDesc.ModeDesc.Width;
+    gHeight = dupDesc.ModeDesc.Height;
+
+    D3D11_TEXTURE2D_DESC desc = {};
+
+    desc.Width = gWidth;
+    desc.Height = gHeight;
+    desc.ArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.Usage = D3D11_USAGE_STAGING;
+    desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+    hr = gDevice->CreateTexture2D(&desc, nullptr, &gStaging);
+
+    return SUCCEEDED(hr);
+}
+
+void ShutdownCapture()
+{
+    if (gStaging)
+    {
+        gStaging->Release();
+        gStaging = nullptr;
+    }
+
+    if (gDuplication)
+    {
+        gDuplication->Release();
+        gDuplication = nullptr;
+    }
+
+    if (gContext)
+    {
+        gContext->Release();
+        gContext = nullptr;
+    }
+
+    if (gDevice)
+    {
+        gDevice->Release();
+        gDevice = nullptr;
+    }
+}
+
+bool GetCaptureSize(int* width, int* height)
+{
+    if (!gDuplication)
+        return false;
+
+    *width = (int)gWidth;
+    *height = (int)gHeight;
+
     return true;
 }
 
-// ---- Exported entry points ----
-extern "C" __declspec(dllexport) bool __stdcall CaptureWindowToBuffer(HWND hwnd, BYTE** outBuffer, UINT32* outSize)
+bool CaptureFrame(
+    uint8_t* destination,
+    int destinationSize,
+    int* width,
+    int* height)
 {
-    if (outBuffer == nullptr || outSize == nullptr) return false;
-    *outBuffer = nullptr;
-    *outSize = 0;
+    if (!gDuplication)
+        return false;
 
-    try
+    const int required = gWidth * gHeight * 4;
+
+    if (destinationSize < required)
+        return false;
+
+    DXGI_OUTDUPL_FRAME_INFO frameInfo;
+    IDXGIResource* resource = nullptr;
+
+    HRESULT hr = gDuplication->AcquireNextFrame(
+        100,
+        &frameInfo,
+        &resource);
+
+    if (FAILED(hr))
+        return false;
+
+    ID3D11Texture2D* frame = nullptr;
+    resource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&frame);
+
+    gContext->CopyResource(gStaging, frame);
+
+    D3D11_MAPPED_SUBRESOURCE mapped;
+
+    hr = gContext->Map(
+        gStaging,
+        0,
+        D3D11_MAP_READ,
+        0,
+        &mapped);
+
+    if (FAILED(hr))
     {
-        HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-        bool needUninit = SUCCEEDED(hr);
-
-        auto d3dDevice = CreateD3DDevice();
-        auto device = CreateDirect3DDevice(d3dDevice);
-
-        winrt::Windows::Graphics::SizeInt32 size;
-        auto texture = CaptureOneFrame(hwnd, d3dDevice, device, size);
-        bool ok = EncodeTextureToBuffer(d3dDevice, texture, outBuffer, outSize);
-
-        if (needUninit) CoUninitialize();
-        return ok;
-    }
-    catch (...)
-    {
+        frame->Release();
+        resource->Release();
+        gDuplication->ReleaseFrame();
         return false;
     }
-}
 
-extern "C" __declspec(dllexport) void __stdcall FreeCaptureBuffer(BYTE* buffer)
-{
-    if (buffer) CoTaskMemFree(buffer);
+    for (UINT y = 0; y < gHeight; y++)
+    {
+        memcpy(
+            destination + y * gWidth * 4,
+            (uint8_t*)mapped.pData + y * mapped.RowPitch,
+            gWidth * 4);
+    }
+
+    gContext->Unmap(gStaging, 0);
+
+    frame->Release();
+    resource->Release();
+
+    gDuplication->ReleaseFrame();
+
+    *width = gWidth;
+    *height = gHeight;
+
+    return true;
 }

@@ -1,16 +1,21 @@
 ﻿using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace Unmute.App.WPF.Extensions
 {
     internal static class BitmapExtension
-    {
-        public static ulong GetPerceptualHash(this Bitmap instance)
+    {   public static ulong GetPerceptualHash(this Bitmap bitmap)
         {
             const int Size = 32;
             const int SmallerSize = 8;
 
             // Resize
-            using var resized = new Bitmap(instance, new Size(Size, Size));
+            using var resized = new Bitmap(Size, Size);
+            using (var g = Graphics.FromImage(resized))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.DrawImage(bitmap, 0, 0, Size, Size);
+            }
 
             // Grayscale
             double[,] pixels = new double[Size, Size];
@@ -20,20 +25,18 @@ namespace Unmute.App.WPF.Extensions
                 for (int x = 0; x < Size; x++)
                 {
                     Color c = resized.GetPixel(x, y);
-
                     pixels[x, y] =
-                        0.299 * c.R +
-                        0.587 * c.G +
-                        0.114 * c.B;
+                        c.R * 0.299 +
+                        c.G * 0.587 +
+                        c.B * 0.114;
                 }
             }
 
             // DCT
             double[,] dct = DCT2D(pixels);
 
-            // Collect low-frequency coefficients (excluding DC)
-            double[] values = new double[63];
-            int index = 0;
+            // Collect top-left 8x8 (excluding DC)
+            List<double> values = new();
 
             for (int y = 0; y < SmallerSize; y++)
             {
@@ -42,12 +45,12 @@ namespace Unmute.App.WPF.Extensions
                     if (x == 0 && y == 0)
                         continue;
 
-                    values[index++] = dct[x, y];
+                    values.Add(dct[x, y]);
                 }
             }
 
-            Array.Sort(values);
-            double median = values[31];
+            values.Sort();
+            double median = values[values.Count / 2];
 
             ulong hash = 0;
             int bit = 0;
@@ -74,31 +77,31 @@ namespace Unmute.App.WPF.Extensions
             int N = input.GetLength(0);
             double[,] output = new double[N, N];
 
+            double c1 = Math.PI / (2.0 * N);
+
             for (int u = 0; u < N; u++)
             {
+                double cu = u == 0 ? Math.Sqrt(1.0 / N) : Math.Sqrt(2.0 / N);
+
                 for (int v = 0; v < N; v++)
                 {
+                    double cv = v == 0 ? Math.Sqrt(1.0 / N) : Math.Sqrt(2.0 / N);
+
                     double sum = 0;
 
                     for (int x = 0; x < N; x++)
                     {
+                        double cos1 = Math.Cos((2 * x + 1) * u * c1);
+
                         for (int y = 0; y < N; y++)
                         {
-                            sum +=
-                                input[x, y] *
-                                Math.Cos((2 * x + 1) * u * Math.PI / (2 * N)) *
-                                Math.Cos((2 * y + 1) * v * Math.PI / (2 * N));
+                            double cos2 = Math.Cos((2 * y + 1) * v * c1);
+
+                            sum += input[x, y] * cos1 * cos2;
                         }
                     }
 
-                    double cu = (u == 0) ? 1 / Math.Sqrt(2) : 1;
-                    double cv = (v == 0) ? 1 / Math.Sqrt(2) : 1;
-
-                    output[u, v] =
-                        0.25 *
-                        cu *
-                        cv *
-                        sum;
+                    output[u, v] = cu * cv * sum;
                 }
             }
 

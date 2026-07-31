@@ -6,6 +6,6 @@ namespace Unmute.Core.Services
     public interface IOCREngine
     {
         Task InitializeAsync();
-        Task<IEnumerable<OCRResult>> ReadTextAsync(Bitmap bmp);
+        Task<IEnumerable<OCRResult>> ReadTextAsync(Bitmap bitmap);
     }
 }

@@ -1,42 +1,46 @@
-﻿<Window x:Class="Unmute.App.WPF.UI.Windows.Overlay.OverlayWindow"
+﻿<adonisControls:AdonisWindow  xmlns:adonisControls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI" x:Class="Unmute.App.WPF.UI.Windows.Overlay.OverlayWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Unmute.App.WPF.UI.Windows.Overlay"
-        mc:Ignorable="d"
+        xmlns:local="clr-namespace:Unmute.App.WPF.UI.Windows.Overlay" xmlns:tb="http://www.hardcodet.net/taskbar"
+                              mc:Ignorable="d"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
-        ShowInTaskbar="False">
-    <Window.Resources>
+        ShowInTaskbar="False"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}">
+    <adonisControls:AdonisWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/UI/Windows/Overlay/OverlayWindowStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </Window.Resources>
-    
+    </adonisControls:AdonisWindow.Resources>
+
     <Grid>
         <Canvas x:Name="AnnotationContainer">
-            
+
         </Canvas>
         <Grid>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="{Binding StartMenuHeight}"/>
             </Grid.RowDefinitions>
-            <Button Grid.Column="1" Grid.Row="1" Content="Parse" Click="OnClick_ParseScreen"/>
-            <Button Grid.Column="1" Grid.Row="2" Content="Settings" Click="OnClick_Settings"/>
-            <Button Grid.Column="1" Grid.Row="3" Content="Close" Click="OnClick_Close"/>
+            <StackPanel Grid.Column="2" Grid.RowSpan="3" VerticalAlignment="Center">
+                <Button Content="Enable" Click="OnClick_Enable"/>
+                <Button Content="Disable" Click="OnClick_Disable"/>
+                <Separator/>
+                
+            </StackPanel>
         </Grid>
     </Grid>
-</Window>
+</adonisControls:AdonisWindow>

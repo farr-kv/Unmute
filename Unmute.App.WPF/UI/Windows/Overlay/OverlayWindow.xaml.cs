@@ -1,25 +1,24 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System.Runtime.InteropServices;
+﻿using AdonisUI.Controls;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Interop;
 using Unmute.App.WPF.Extensions;
 using Unmute.App.WPF.Interops;
-using Unmute.App.WPF.UI.Windows.Settings;
 using Unmute.Core.Services;
 
 namespace Unmute.App.WPF.UI.Windows.Overlay
 {
-    public partial class OverlayWindow : Window
+    public partial class OverlayWindow : AdonisWindow
     {
-        private readonly IServiceProvider serviceProvider;
+        private readonly IScreenCaptureService screenCapture;
         private readonly IOCREngine ocrEngine;
         private readonly ITtsService ttsService;
-        private ulong currentPHash;
+        private ulong currentHash;
 
-        public OverlayWindow(IServiceProvider serviceProvider, IOCREngine ocrEngine, ITtsService ttsService)
+        public int StartMenuHeight => (int)(SystemParameters.VirtualScreenHeight - SystemParameters.WorkArea.Bottom);
+
+        public OverlayWindow(IScreenCaptureService screenCapture, IOCREngine ocrEngine, ITtsService ttsService)
         {
-            this.serviceProvider = serviceProvider;
+            this.screenCapture = screenCapture;
             this.ocrEngine = ocrEngine;
             this.ttsService = ttsService;
 
@@ -35,29 +34,23 @@ namespace Unmute.App.WPF.UI.Windows.Overlay
         {
             base.OnSourceInitialized(e);
             this.SetNoActivate();
+            this.SetExcludeFromCapture();
         }
 
-        private void OnClick_Close(object sender, RoutedEventArgs e)
+        private void OnClick_Disable(object sender, RoutedEventArgs e)
         {
-            this.Close();
+            this.AnnotationContainer.Children.Clear();
         }
 
-        private void OnClick_Settings(object sender, RoutedEventArgs e)
+        private async void OnClick_Enable(object sender, RoutedEventArgs e)
         {
-            var settingsWindow = this.serviceProvider.GetRequiredService<SettingsWindow>();
-            settingsWindow.Show();
-            settingsWindow.Focus(); // Required because of SetNoActivate
-        }
-
-        private async void OnClick_ParseScreen(object sender, RoutedEventArgs e)
-        {
-            var screenshot = this.CaptureScreenshot();
+            using var screenshot = this.screenCapture.CaptureFrame();
             var phash = screenshot.GetPerceptualHash();
-            var diff = this.HammingDistance(phash, currentPHash);
-            if (diff < 2)
+            var diff = this.HammingDistance(phash, currentHash);
+            if (diff < 1.5f) // TODO make this configurable
                 return;
 
-            this.currentPHash = phash;
+            this.currentHash = phash;
             var results = await this.ocrEngine.ReadTextAsync(screenshot);
             this.AnnotationContainer.Children.Clear();
             var style = (Style)FindResource("NarrationButtonStyle");
@@ -78,30 +71,15 @@ namespace Unmute.App.WPF.UI.Windows.Overlay
             }
         }
 
-        private System.Drawing.Bitmap CaptureScreenshot()
-        {
-            var bmp = new System.Drawing.Bitmap((int)this.Width, (int)this.Height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            using (var g = System.Drawing.Graphics.FromImage(bmp))
-            {
-                g.CopyFromScreen(
-                    (int)this.Left,
-                    (int)this.Top,
-                    0,
-                    0,
-                    new System.Drawing.Size((int)this.Width, (int)this.Height));
-            }
-            return bmp;
-        }
-
         private int HammingDistance(ulong a, ulong b)
         {
-            ulong value = a ^ b;
+            ulong x = a ^ b;
             int count = 0;
 
-            while (value != 0)
+            while (x != 0)
             {
-                value &= value - 1;
                 count++;
+                x &= x - 1;
             }
 
             return count;

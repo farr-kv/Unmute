@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using Unmute.App.WPF.Extensions;
+using Unmute.App.WPF.UI.SystemTray;
 using Unmute.App.WPF.UI.Windows.Overlay;
 using Unmute.Core.Services;
 

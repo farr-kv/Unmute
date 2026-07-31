@@ -11,6 +11,7 @@
 
                 <ResourceDictionary Source="/UI/Styles/Colours.xaml"/>
                 <ResourceDictionary Source="/UI/Styles/AppStyle.xaml"/>
+                <ResourceDictionary Source="/UI/SystemTray/SystemTrayResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

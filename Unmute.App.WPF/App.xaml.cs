@@ -1,19 +1,22 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Hardcodet.Wpf.TaskbarNotification;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using System.Windows;
-using Unmute.App.WPF.UI.Windows.Splash;
-using Unmute.App.WPF.UI.Windows.Settings;
-using Unmute.Core.Extensions;
-using Unmute.TTS.PocketTTS.Extensions;
-using Unmute.OCR.PaddleOCR.Extensions;
+using Unmute.App.WPF.UI.SystemTray;
 using Unmute.App.WPF.UI.Windows.Overlay;
+using Unmute.App.WPF.UI.Windows.Settings;
+using Unmute.App.WPF.UI.Windows.Splash;
+using Unmute.Core.Extensions;
+using Unmute.OCR.PaddleOCR.Extensions;
+using Unmute.TTS.PocketTTS.Extensions;
 
 namespace Unmute.App.WPF
 {
     public partial class App : Application
     {
         private IServiceProvider? serviceProvider;
+        private TaskbarIcon? taskbarIcon;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -28,6 +31,9 @@ namespace Unmute.App.WPF
 
             var window = serviceProvider.GetRequiredService<SplashWindow>();
             window.Show();
+
+            taskbarIcon = (TaskbarIcon)FindResource("NotifyIcon");
+            taskbarIcon.DataContext = serviceProvider.GetRequiredService<SystemTrayViewModel>();
         }
 
         private void ConfigureServices(IServiceCollection services)
@@ -47,10 +53,14 @@ namespace Unmute.App.WPF
             services.AddTransient<SplashWindow>();
             services.AddTransient<SettingsWindow>();
             services.AddTransient<OverlayWindow>();
+
+            services.AddSingleton<SystemTrayViewModel>();
         }
 
         private void OnExit(object sender, ExitEventArgs e)
         {
+            taskbarIcon?.Dispose();
+
             if (serviceProvider is IDisposable disposable)
             {
                 disposable.Dispose();

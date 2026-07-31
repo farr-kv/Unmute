@@ -32,11 +32,14 @@ namespace Unmute.OCR.PaddleOCR
             return Task.CompletedTask;
         }
 
-        public Task<IEnumerable<OCRResult>> ReadTextAsync(Bitmap bmp)
+        public Task<IEnumerable<OCRResult>> ReadTextAsync(Bitmap bitmap)
         {
-            using Mat image = BitmapConverter.ToMat(bmp);
+            using Mat image = BitmapConverter.ToMat(bitmap);
+            if (image.Channels() == 4)
+                Cv2.CvtColor(image, image, ColorConversionCodes.BGRA2BGR);
+
             var results = ocr.Run(image).Regions
-                .Where(r => r.Score > 0.7f)
+                .Where(r => r.Score > 0.5f)
                 .Select(r =>
             {
                 var rect = r.Rect.BoundingRect();
