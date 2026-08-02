@@ -9,6 +9,9 @@ namespace Unmute.App.WPF.UI.SystemTray
     {
         private readonly IServiceProvider serviceProvider;
 
+        // TODO expose visibility property to hide options from menu
+        // TODO get status of the screen reading process
+
         public SystemTrayViewModel(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
@@ -34,7 +37,7 @@ namespace Unmute.App.WPF.UI.SystemTray
             CanExecuteFunc = () => false,
             CommandAction = () =>
             {
-                
+                // TODO publish event
             }
         };
 
@@ -43,7 +46,7 @@ namespace Unmute.App.WPF.UI.SystemTray
             CanExecuteFunc = () => false,
             CommandAction = () =>
             {
-
+                // TODO publish event
             }
         };
     }
