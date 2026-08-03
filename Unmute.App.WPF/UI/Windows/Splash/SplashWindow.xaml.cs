@@ -4,9 +4,9 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using Unmute.App.WPF.Extensions;
-using Unmute.App.WPF.UI.SystemTray;
 using Unmute.App.WPF.UI.Windows.Overlay;
 using Unmute.Core.Services;
+using Unmute.OCR.Services;
 
 namespace Unmute.App.WPF.UI.Windows.Splash
 {
@@ -26,8 +26,8 @@ namespace Unmute.App.WPF.UI.Windows.Splash
             {
                 try
                 {
-                    var ocrEngine = serviceProvider.GetRequiredService<IOCREngine>();
-                    await ocrEngine.InitializeAsync();
+                    var ocrService = serviceProvider.GetRequiredService<IOcrService>();
+                    await ocrService.InitializeAsync(OCR.OcrEngineType.Tesseract);
 
                     var ttsService = serviceProvider.GetRequiredService<ITtsService>();
                     await ttsService.InitializeAsync();

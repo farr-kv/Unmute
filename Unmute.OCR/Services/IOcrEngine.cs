@@ -1,9 +1,9 @@
 ﻿using System.Drawing;
 using Unmute.Core.Models;
 
-namespace Unmute.Core.Services
+namespace Unmute.OCR.Services
 {
-    public interface IOCREngine
+    internal interface IOcrEngine: IDisposable
     {
         Task InitializeAsync();
         Task<IEnumerable<OCRResult>> ReadTextAsync(Bitmap bitmap);

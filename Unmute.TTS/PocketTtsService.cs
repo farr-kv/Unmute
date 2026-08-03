@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using Unmute.Core.Models;
 using Unmute.Core.Services;
 
-namespace Unmute.TTS.PocketTTS
+namespace Unmute.TTS
 {
     internal class PocketTtsService : ITtsService, IDisposable
     {

@@ -5,12 +5,15 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using Unmute.Core.Models;
 using Unmute.Core.Services;
+using Unmute.OCR;
+using Unmute.OCR.Services;
 
 namespace Unmute.App.WPF.UI.Windows.Settings
 {
     public partial class SettingsWindow : AdonisWindow, INotifyPropertyChanged, IDisposable
     {        
-        public ObservableCollection<Voice> AvailableVoices { get; } = new ();
+        public ObservableCollection<Voice> AvailableVoices { get; }
+        public ObservableCollection<OcrEngineType> AvailableOcrEngines { get; }
 
         public Voice SelectedVoice 
         {
@@ -22,20 +25,30 @@ namespace Unmute.App.WPF.UI.Windows.Settings
             }
         }
 
-        private readonly ITtsService ttsService;
-
-        public SettingsWindow(ITtsService ttsService)
+        public OcrEngineType SelectedOcrEngine
         {
-            this.ttsService = ttsService;
-            this.InitializeComponent();
+            get => this.ocrService.SelectedEngineType;
+            set
+            {
+                this.ocrService.InitializeAsync(value).Wait();
+                this.OnPropertyChanged();
+            }
         }
 
-        private void OnWindowLoaded(object sender, RoutedEventArgs e)
+        private readonly ITtsService ttsService;
+        private readonly IOcrService ocrService;
+
+        public SettingsWindow(ITtsService ttsService, IOcrService ocrService)
         {
-            foreach (var voice in this.ttsService.AvailableVoices)
-            {
-                this.AvailableVoices.Add(voice);
-            }
+            this.ttsService = ttsService;
+            this.ocrService = ocrService;
+            this.InitializeComponent();
+
+            this.AvailableVoices = new ObservableCollection<Voice>(this.ttsService.AvailableVoices);
+            this.AvailableOcrEngines = new ObservableCollection<OcrEngineType>(Enum.GetValues<OcrEngineType>().Where(x => x is not OcrEngineType.None));
+
+            this.OnPropertyChanged(nameof(AvailableVoices));
+            this.OnPropertyChanged(nameof(AvailableOcrEngines));
         }
 
         public void Dispose()

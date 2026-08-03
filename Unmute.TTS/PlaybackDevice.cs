@@ -1,6 +1,6 @@
 ﻿using NAudio.Wave;
 
-namespace Unmute.TTS.PocketTTS
+namespace Unmute.TTS
 {
     internal class PlaybackDevice: IDisposable
     {

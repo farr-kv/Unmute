@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
-using Unmute.TTS.PocketTTS.Extensions;
+using Unmute.TTS.Extensions;
 
-namespace Unmute.TTS.PocketTTS
+namespace Unmute.TTS
 {
     internal class PythonClient
     {

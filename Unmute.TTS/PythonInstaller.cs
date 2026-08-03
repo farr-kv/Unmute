@@ -2,7 +2,7 @@
 using System.IO.Compression;
 using System.Text.RegularExpressions;
 
-namespace Unmute.TTS.PocketTTS
+namespace Unmute.TTS
 {
     internal class PythonInstaller
     {

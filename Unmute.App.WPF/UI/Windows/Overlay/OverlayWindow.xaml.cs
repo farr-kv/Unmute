@@ -5,13 +5,14 @@ using Unmute.App.WPF.Extensions;
 using Unmute.App.WPF.Interops;
 using Unmute.Core;
 using Unmute.Core.Services;
+using Unmute.OCR.Services;
 
 namespace Unmute.App.WPF.UI.Windows.Overlay
 {
     public partial class OverlayWindow : AdonisWindow
     {
         private readonly IScreenCaptureService screenCapture;
-        private readonly IOCREngine ocrEngine;
+        private readonly IOcrService ocrService;
         private readonly ITtsService ttsService;
         private ulong currentHash;
 
@@ -20,10 +21,10 @@ namespace Unmute.App.WPF.UI.Windows.Overlay
 
         public int StartMenuHeight => (int)(SystemParameters.VirtualScreenHeight - SystemParameters.WorkArea.Bottom);
 
-        public OverlayWindow(IScreenCaptureService screenCapture, IOCREngine ocrEngine, ITtsService ttsService)
+        public OverlayWindow(IScreenCaptureService screenCapture, IOcrService ocrService, ITtsService ttsService)
         {
             this.screenCapture = screenCapture;
-            this.ocrEngine = ocrEngine;
+            this.ocrService = ocrService;
             this.ttsService = ttsService;            
 
             Left = SystemParameters.VirtualScreenLeft;
@@ -49,6 +50,7 @@ namespace Unmute.App.WPF.UI.Windows.Overlay
             this.refreshTask?.Dispose();
             this.refreshTask = null;
             this.AnnotationContainer.Children.Clear();
+            this.currentHash = 0;
         }
 
         private async void OnClick_Enable(object sender, RoutedEventArgs e)
@@ -66,7 +68,7 @@ namespace Unmute.App.WPF.UI.Windows.Overlay
                 return;
 
             this.currentHash = phash;
-            var results = await this.ocrEngine.ReadTextAsync(screenshot);
+            var results = await this.ocrService.ReadTextAsync(screenshot);
 
             this.RunOnUiThread(() =>
             {

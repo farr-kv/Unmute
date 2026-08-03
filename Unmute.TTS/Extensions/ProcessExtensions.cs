@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Unmute.TTS.PocketTTS.Extensions
+namespace Unmute.TTS.Extensions
 {
     // Clanker code to use job objects to auto close any child processes
     internal static class ProcessExtensions

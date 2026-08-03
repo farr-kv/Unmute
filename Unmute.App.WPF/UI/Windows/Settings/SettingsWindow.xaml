@@ -6,7 +6,6 @@
         xmlns:adonisUi="clr-namespace:AdonisUI;assembly=AdonisUI"
         xmlns:adonisControls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
         Title="Unmute" Height="450" Width="800" mc:Ignorable="d"
-        Loaded="OnWindowLoaded"
         DataContext="{Binding RelativeSource={RelativeSource Self}}">
 
     <DockPanel>
@@ -34,7 +33,10 @@
             </Button>
 
             <Separator Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="4" Margin="8"></Separator>
-            <TextBlock Grid.Column="0" Grid.Row="2" VerticalAlignment="Center" Text="HotKeys:"/>
+            <TextBlock Grid.Column="0" Grid.Row="2" VerticalAlignment="Center" Text="OCR Engine:"/>
+            <ComboBox Grid.Column="1" Grid.Row="2" Margin="8 0 8 0"
+                  ItemsSource="{Binding AvailableOcrEngines}"
+                  SelectedItem="{Binding SelectedOcrEngine}"/>
         </Grid>
     </DockPanel>
 </adonisControls:AdonisWindow>

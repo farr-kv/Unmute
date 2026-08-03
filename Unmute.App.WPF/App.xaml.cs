@@ -9,7 +9,7 @@ using Unmute.App.WPF.UI.Windows.Settings;
 using Unmute.App.WPF.UI.Windows.Splash;
 using Unmute.Core.Extensions;
 using Unmute.OCR.PaddleOCR.Extensions;
-using Unmute.TTS.PocketTTS.Extensions;
+using Unmute.TTS.Extensions;
 
 namespace Unmute.App.WPF
 {
@@ -46,8 +46,8 @@ namespace Unmute.App.WPF
 
             // Services
             services.AddUnmuteCore()
-                    .UsePaddleOCR()
-                    .UsePocketTTS();
+                    .UseOCR()
+                    .UseTTS();
 
             // Windows
             services.AddTransient<SplashWindow>();
